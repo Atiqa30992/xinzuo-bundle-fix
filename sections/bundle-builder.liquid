@@ -1,0 +1,658 @@
+<div class="bundle-builder" data-section-id="{{ section.id }}">
+
+  <div class="bundle-hero">
+    <h1 class="bundle-title">Build Your Bundle</h1>
+    <p class="bundle-subtitle">Mix & match knives from any series. The more you add, the more you save.</p>
+    <div class="bundle-discount-badges">
+      <span class="discount-badge">2 knives → <strong>5% off</strong></span>
+      <span class="discount-badge">3 knives → <strong>10% off</strong></span>
+      <span class="discount-badge">4+ knives → <strong>15% off</strong></span>
+    </div>
+  </div>
+
+  <!-- Series Tab Navigation -->
+  <div class="bundle-tabs" role="tablist" aria-label="Knife series">
+    {% for block in section.blocks %}
+      {% if block.type == 'series' %}
+        <button
+          class="bundle-tab {% if forloop.first %}is-active{% endif %}"
+          role="tab"
+          aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+          aria-controls="tab-panel-{{ block.id }}"
+          id="tab-{{ block.id }}"
+          data-tab="{{ block.id }}"
+        >
+          {{ block.settings.tab_label | default: block.settings.collection_handle }}
+        </button>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  <!-- Tab Panels -->
+  <div class="bundle-panels">
+    {% for block in section.blocks %}
+      {% if block.type == 'series' %}
+        {% assign col = collections[block.settings.collection_handle] %}
+        <div
+          class="bundle-panel {% if forloop.first %}is-active{% endif %}"
+          role="tabpanel"
+          id="tab-panel-{{ block.id }}"
+          aria-labelledby="tab-{{ block.id }}"
+          {% unless forloop.first %}hidden{% endunless %}
+        >
+          {% if col == blank %}
+            <p class="bundle-empty">No collection found. Please check the section settings.</p>
+          {% else %}
+            <div class="bundle-grid">
+              {% for product in col.products limit: 16 %}
+                {% assign first_variant = product.variants.first %}
+                <div
+                  class="bundle-card"
+                  data-product-id="{{ first_variant.id }}"
+                  data-product-title="{{ product.title | escape }}"
+                  data-product-price="{{ first_variant.price }}"
+                  data-product-image="{{ product.featured_image | img_url: '400x400', crop: 'center' }}"
+                >
+                  <div class="bundle-card__image-wrap">
+                    <img
+                      src="{{ product.featured_image | img_url: '400x400', crop: 'center' }}"
+                      alt="{{ product.featured_image.alt | default: product.title | escape }}"
+                      loading="lazy"
+                      width="400"
+                      height="400"
+                    >
+                    <button class="bundle-card__add" aria-label="Add {{ product.title | escape }} to bundle">
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                        <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="bundle-card__info">
+                    <p class="bundle-card__title">{{ product.title }}</p>
+                    <p class="bundle-card__price">{{ first_variant.price | money }}</p>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+</div>
+
+<!-- Sticky Bundle Cart -->
+<div class="bundle-cart" id="bundleCart" aria-live="polite" aria-label="Bundle cart">
+  <div class="bundle-cart__inner">
+    <div class="bundle-cart__left">
+      <p class="bundle-cart__count"><span id="bundleCount">0</span> items selected</p>
+      <div class="bundle-cart__items" id="bundleCartItems">
+        <p class="bundle-cart__empty-msg" id="bundleEmptyMsg">Add knives above to get started.</p>
+      </div>
+    </div>
+    <div class="bundle-cart__right">
+      <p class="bundle-cart__discount-line" id="bundleDiscountLine"></p>
+      <p class="bundle-cart__total">
+        Total: <strong id="bundleTotal">$0.00</strong>
+      </p>
+      <button
+        class="bundle-cart__btn"
+        id="bundleAddBtn"
+        disabled
+        aria-disabled="true"
+      >
+        Add Bundle to Cart
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ── Reset & Base ── */
+.bundle-builder {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 24px 120px;
+  font-family: inherit;
+}
+
+/* ── Hero ── */
+.bundle-hero {
+  text-align: center;
+  margin-bottom: 40px;
+}
+.bundle-title {
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0 0 10px;
+}
+.bundle-subtitle {
+  color: #555;
+  font-size: 16px;
+  margin: 0 0 20px;
+}
+.bundle-discount-badges {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.discount-badge {
+  background: #f4f4f4;
+  border: 1px solid #e0e0e0;
+  border-radius: 99px;
+  padding: 6px 16px;
+  font-size: 13px;
+  color: #333;
+}
+.discount-badge strong { color: #1a6e2e; }
+
+/* ── Tabs ── */
+.bundle-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  border-bottom: 2px solid #e8e8e8;
+  padding-bottom: 0;
+}
+.bundle-tab {
+  padding: 10px 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.bundle-tab:hover { color: #000; }
+.bundle-tab.is-active {
+  color: #000;
+  border-bottom-color: #000;
+}
+.bundle-tab:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ── Panel ── */
+.bundle-panel { display: none; }
+.bundle-panel.is-active { display: block; }
+
+/* ── Grid ── */
+.bundle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+/* ── Card ── */
+.bundle-card {
+  border: 2px solid transparent;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+  background: #fff;
+}
+.bundle-card:hover {
+  border-color: #ccc;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+.bundle-card.is-selected {
+  border-color: #000;
+}
+.bundle-card__image-wrap {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: #f7f7f7;
+}
+.bundle-card__image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+.bundle-card:hover .bundle-card__image-wrap img {
+  transform: scale(1.04);
+}
+.bundle-card__add {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 0.15s, transform 0.15s;
+}
+.bundle-card:hover .bundle-card__add,
+.bundle-card.is-selected .bundle-card__add {
+  opacity: 1;
+  transform: scale(1);
+}
+.bundle-card.is-selected .bundle-card__add {
+  background: #e00;
+}
+.bundle-card.is-selected .bundle-card__add svg path {
+  d: path("M4 10h12");
+}
+.bundle-card__info {
+  padding: 10px 12px 12px;
+}
+.bundle-card__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111;
+  margin: 0 0 4px;
+  line-height: 1.3;
+}
+.bundle-card__price {
+  font-size: 13px;
+  color: #555;
+  margin: 0;
+}
+
+/* ── Sticky Cart ── */
+.bundle-cart {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-top: 2px solid #000;
+  z-index: 200;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 -8px 32px rgba(0,0,0,0.12);
+}
+.bundle-cart.is-visible {
+  transform: translateY(0);
+}
+.bundle-cart__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.bundle-cart__left { flex: 1; min-width: 0; }
+.bundle-cart__right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.bundle-cart__count {
+  font-weight: 700;
+  font-size: 15px;
+  margin: 0 0 6px;
+}
+.bundle-cart__items {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.bundle-cart__item-chip {
+  background: #f2f2f2;
+  border-radius: 99px;
+  padding: 3px 10px 3px 12px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.bundle-cart__item-chip button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #888;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+.bundle-cart__item-chip button:hover { color: #e00; }
+.bundle-cart__empty-msg {
+  font-size: 13px;
+  color: #999;
+  margin: 0;
+  font-style: italic;
+}
+.bundle-cart__discount-line {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a6e2e;
+  margin: 0;
+  min-width: 120px;
+}
+.bundle-cart__total {
+  font-size: 16px;
+  margin: 0;
+  white-space: nowrap;
+}
+.bundle-cart__btn {
+  background: #000;
+  color: #fff;
+  border: none;
+  padding: 14px 28px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+.bundle-cart__btn:hover:not(:disabled) {
+  background: #222;
+  transform: translateY(-1px);
+}
+.bundle-cart__btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+.bundle-cart__btn:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 3px;
+}
+
+/* ── Loading state ── */
+.bundle-cart__btn.is-loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* ── Mobile ── */
+@media (max-width: 640px) {
+  .bundle-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .bundle-cart__inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+  .bundle-cart__right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .bundle-cart__btn { padding: 12px 20px; font-size: 14px; }
+  .bundle-tabs { gap: 4px; }
+  .bundle-tab { padding: 8px 14px; font-size: 13px; }
+}
+</style>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── State ── */
+  var selectedItems = []; // { variantId, title, price }
+
+  /* ── DOM refs ── */
+  var cart         = document.getElementById('bundleCart');
+  var cartItems    = document.getElementById('bundleCartItems');
+  var cartCount    = document.getElementById('bundleCount');
+  var cartTotal    = document.getElementById('bundleTotal');
+  var discountLine = document.getElementById('bundleDiscountLine');
+  var addBtn       = document.getElementById('bundleAddBtn');
+  var emptyMsg     = document.getElementById('bundleEmptyMsg');
+
+  /* ── Discount tiers ── */
+  function getDiscount(count) {
+    if (count >= 4) return 0.15;
+    if (count >= 3) return 0.10;
+    if (count >= 2) return 0.05;
+    return 0;
+  }
+
+  /* ── Render cart ── */
+  function renderCart() {
+    var count    = selectedItems.length;
+    var discount = getDiscount(count);
+    var subtotal = selectedItems.reduce(function(s, i) { return s + i.price; }, 0);
+    var total    = Math.round(subtotal * (1 - discount));
+
+    // Count
+    cartCount.textContent = count;
+
+    // Chips
+    if (count === 0) {
+      cartItems.innerHTML = '';
+      cartItems.appendChild(emptyMsg);
+    } else {
+      emptyMsg.remove();
+      cartItems.innerHTML = selectedItems.map(function(item, idx) {
+        return '<span class="bundle-cart__item-chip">'
+          + escHtml(item.title)
+          + '<button aria-label="Remove ' + escHtml(item.title) + '" data-remove="' + idx + '">&#x2715;</button>'
+          + '</span>';
+      }).join('');
+    }
+
+    // Discount
+    if (discount > 0) {
+      discountLine.textContent = '🎉 ' + (discount * 100) + '% bundle discount!';
+    } else if (count === 1) {
+      discountLine.textContent = 'Add 1 more for 5% off';
+    } else {
+      discountLine.textContent = '';
+    }
+
+    // Total
+    cartTotal.textContent = formatMoney(total);
+
+    // Button
+    addBtn.disabled = count === 0;
+    addBtn.setAttribute('aria-disabled', count === 0 ? 'true' : 'false');
+
+    // Slide cart in/out
+    if (count > 0) {
+      cart.classList.add('is-visible');
+    } else {
+      cart.classList.remove('is-visible');
+    }
+  }
+
+  /* ── Toggle card selection ── */
+  function toggleCard(card) {
+    var variantId = card.dataset.productId;
+    var title     = card.dataset.productTitle;
+    var price     = parseInt(card.dataset.productPrice, 10);
+    var existIdx  = selectedItems.findIndex(function(i) { return i.variantId === variantId; });
+
+    if (existIdx > -1) {
+      selectedItems.splice(existIdx, 1);
+      card.classList.remove('is-selected');
+      card.querySelector('.bundle-card__add').setAttribute('aria-label', 'Add ' + title + ' to bundle');
+    } else {
+      selectedItems.push({ variantId: variantId, title: title, price: price });
+      card.classList.add('is-selected');
+      card.querySelector('.bundle-card__add').setAttribute('aria-label', 'Remove ' + title + ' from bundle');
+    }
+
+    renderCart();
+  }
+
+  /* ── Tab switching ── */
+  var tabs   = document.querySelectorAll('.bundle-tab');
+  var panels = document.querySelectorAll('.bundle-panel');
+
+  tabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      var target = tab.dataset.tab;
+
+      tabs.forEach(function(t) {
+        t.classList.remove('is-active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      panels.forEach(function(p) {
+        p.classList.remove('is-active');
+        p.hidden = true;
+      });
+
+      tab.classList.add('is-active');
+      tab.setAttribute('aria-selected', 'true');
+      var panel = document.getElementById('tab-panel-' + target);
+      if (panel) {
+        panel.classList.add('is-active');
+        panel.hidden = false;
+      }
+    });
+  });
+
+  /* ── Card click delegation ── */
+  document.querySelector('.bundle-builder').addEventListener('click', function(e) {
+    var card = e.target.closest('.bundle-card');
+    if (card) toggleCard(card);
+  });
+
+  /* ── Remove chip ── */
+  cart.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-remove]');
+    if (!btn) return;
+    var idx     = parseInt(btn.dataset.remove, 10);
+    var item    = selectedItems[idx];
+    selectedItems.splice(idx, 1);
+    // deselect card
+    var card = document.querySelector('.bundle-card[data-product-id="' + item.variantId + '"]');
+    if (card) card.classList.remove('is-selected');
+    renderCart();
+  });
+
+  /* ── Add to cart ── */
+  addBtn.addEventListener('click', function() {
+    if (selectedItems.length === 0) return;
+    addBtn.classList.add('is-loading');
+    addBtn.textContent = 'Adding…';
+
+    var items = selectedItems.map(function(i) {
+      return { id: parseInt(i.variantId, 10), quantity: 1 };
+    });
+
+    fetch('/cart/add.js', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+      body: JSON.stringify({ items: items })
+    })
+    .then(function(res) {
+      if (!res.ok) throw new Error('Cart error ' + res.status);
+      return res.json();
+    })
+    .then(function() {
+      window.location.href = '/cart';
+    })
+    .catch(function(err) {
+      console.error(err);
+      addBtn.classList.remove('is-loading');
+      addBtn.textContent = 'Add Bundle to Cart';
+      alert('Sorry, something went wrong. Please try again.');
+    });
+  });
+
+  /* ── Helpers ── */
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function formatMoney(cents) {
+    return '$' + (cents / 100).toFixed(2);
+  }
+
+  /* ── Init ── */
+  renderCart();
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Bundle Builder",
+  "settings": [],
+  "blocks": [
+    {
+      "type": "series",
+      "name": "Knife Series Tab",
+      "settings": [
+        {
+          "type": "text",
+          "id": "tab_label",
+          "label": "Tab Label",
+          "default": "LAN Series"
+        },
+        {
+          "type": "text",
+          "id": "collection_handle",
+          "label": "Collection Handle",
+          "info": "The handle of the collection to show in this tab (e.g. xinzuo-lan-series-knives)",
+          "default": "xinzuo-lan-series-knives"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Bundle Builder",
+      "blocks": [
+        {
+          "type": "series",
+          "settings": {
+            "tab_label": "LAN Series",
+            "collection_handle": "xinzuo-lan-series-knives"
+          }
+        },
+        {
+          "type": "series",
+          "settings": {
+            "tab_label": "ZHEN Series",
+            "collection_handle": "pm8o-zhen-series"
+          }
+        },
+        {
+          "type": "series",
+          "settings": {
+            "tab_label": "MO Series",
+            "collection_handle": "xinzuo-mo-series-knives"
+          }
+        },
+        {
+          "type": "series",
+          "settings": {
+            "tab_label": "SUPREME Series",
+            "collection_handle": "hezhen-supreme-series-knives"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
