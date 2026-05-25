@@ -1,0 +1,39 @@
+{
+  "sections": {
+    "bundle-builder": {
+      "type": "bundle-builder",
+      "blocks": {
+        "block1": {
+          "type": "series",
+          "settings": {
+            "tab_label": "LAN Series",
+            "collection_handle": "xinzuo-lan-series-knives"
+          }
+        },
+        "block2": {
+          "type": "series",
+          "settings": {
+            "tab_label": "ZHEN Series",
+            "collection_handle": "pm8o-zhen-series"
+          }
+        },
+        "block3": {
+          "type": "series",
+          "settings": {
+            "tab_label": "MO Series",
+            "collection_handle": "xinzuo-mo-series-knives"
+          }
+        },
+        "block4": {
+          "type": "series",
+          "settings": {
+            "tab_label": "SUPREME Series",
+            "collection_handle": "hezhen-supreme-series-knives"
+          }
+        }
+      },
+      "block_order": ["block1","block2","block3","block4"]
+    }
+  },
+  "order": ["bundle-builder"]
+}
