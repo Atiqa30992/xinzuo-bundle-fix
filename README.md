@@ -1,6 +1,6 @@
 # Xinzuo Bundle Builder Fix
 
-**Loom URL:** No Loom — code patch submission (see NOTE.md)
+**Loom URL:** https://www.loom.com/share/6fde5c2c4ef646868cbf53cb47375b7c
 
 ## What I Fixed
 
